@@ -43,7 +43,28 @@ def getUIobjName():
                         if x.name == parameters[0]:
                             x.addObject(obj)
                             # x.addObject(obj)
-                            
+                            print len(x.innerObj),"--------------------"
+                            xtojson=jsonpickle.dumps(x)
+                            xjsonObj=simplejson.loads(xtojson)
+                            print xjsonObj, "******************"
+
+                            type1xml = dicttoxml.dicttoxml(xjsonObj)
+                            print "Type1 object xml :"
+                            print(type1xml), "yeeeeeeeeeeeeeeeeeeeeesss"
+
+                            xmlFile = open("ui.xml", "w")
+
+                            xmlFile.write(type1xml)
+
+
+
+                # tojsonObj = jsonpickle.dumps(obj)
+                # jsonObj = simplejson.loads(tojsonObj)
+                # print jsonObj,"******************"
+                # print "object xml :"
+                # xml = dicttoxml.dicttoxml(jsonObj)
+                # print(xml),"yeeeeeeeeeeeeeeeeeeeeesss"
+
 
 def getType1Obj(line):
     pattern=re.compile(r'\((.*)\)')

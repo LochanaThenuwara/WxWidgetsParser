@@ -1,10 +1,11 @@
 class WxObjects:
 
     def __init__(self,name, type):
-        self.name =name
-        self.type = type
         self.features = []
-        self.innerObj=[]
+
+        self.name = name
+        self.type = type
+        self.innerObj = []
 
     def addObject(self,type2obj):
         self.innerObj.append(type2obj)

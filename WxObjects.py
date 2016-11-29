@@ -6,6 +6,7 @@ class WxObjects:
         self.name = name
         self.type = type
         self.innerObj = []
+        self.panel=""
 
     def addObject(self,type2obj):
         self.innerObj.append(type2obj)

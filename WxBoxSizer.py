@@ -8,9 +8,9 @@ class WxBoxSizer:
         self.innerObj = []
         self.direction=""
 
-    def addObjectName(self,obj_name):
-        self.innerObj.append(obj_name)
-        print obj_name,"Objname added to ", self.name
+    def addObject(self,obj):
+        self.innerObj.append(obj)
+        print obj.name,"Obj---- added to ", self.name
 
     def addFeature(self,feature):
 

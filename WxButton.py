@@ -5,6 +5,7 @@ class WxButton(WxObjects.WxObjects):
         self.name = name
         self.type = type
 
+
         self.wxT=None
         self.wxID = ""
         self.wxPoint=[]

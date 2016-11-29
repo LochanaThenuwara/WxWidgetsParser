@@ -10,8 +10,9 @@ import WxTextCtrl
 import WxBoxSizer
 
 sizers={"vbox":None,"hbox1":None,"hbox2":None,"hbox3":None}
-type1={"panel"}
+type1={"panel":None}
 type2={"button1","button2S","m_cb"}
+
 
 objects={"panel":"wxPanel","m_cb":"wxCheckBox","button1":"wxButton","button2":"wxButton",
          "m_usernameLabel":"wxStaticText","m_usernameEntry":"wxTextCtrl","m_passwordLabel":"wxStaticText",
@@ -27,6 +28,7 @@ Mappings={"wxButton":"button","wxPanel":"div"}
 wx_file= open('C:/ProjectSE/WxLoginForm/WxLoginForm/FormLogin.cpp','r')
 
 def getUIobjName():
+    normal = True
 
     for line in wx_file:
 
@@ -35,15 +37,8 @@ def getUIobjName():
             searchStr = obj+" "+"="+" "+"new"
             sizerStr="->Add("+obj
 
-            if ((searchStr in line) or (sizerStr in line)):
-                if (sizerStr in line):
-                    sizer = line.split("->")[0].split()[0]
-                    print "---------------------****************--------------------", obj
 
-                    if sizers.has_key(sizer):
-                        print "---------------------chanaka--------------------", sizers[sizer]
-                        sizerObj=sizers[sizer]
-                        sizerObj.addObjectName(obj)
+            if (searchStr in line):
 
                 if type=="wxBoxSizer":
                     pattern = re.compile(r'\((.*)\)')
@@ -63,8 +58,10 @@ def getUIobjName():
 
                 if type=="wxButton":
                     obj = WxButton.WxButton(obj, type)
-
+                    obj.panel=parameters[0]
                     for i in range(1, len(parameters)):
+
+
                         if "wxT"in parameters[i]:
                             word =re.findall('"([^"]*)"', parameters[i])
                             obj.wxT=word[0]
@@ -82,19 +79,19 @@ def getUIobjName():
 
                 if type=="wxBoxSizer":
                     objName=obj
-                    obj = WxBoxSizer.WxBoxSizer(obj, type)
+                    obj = WxBoxSizer.WxBoxSizer(objName, type)
 
-                    for i in range(1, len(parameters)):
-                        if "wxHORIZONTAL"in parameters[i]:
-                            obj.direction="wxHORIZONTAL"
-                        elif "wxVERTICAL"in parameters[i]:
-                            obj.direction="wxVERTICAL"
+                    if "wxHORIZONTAL"in parameters:
+                        obj.direction="wxHORIZONTAL"
+                    elif "wxVERTICAL"in parameters:
+                        obj.direction="wxVERTICAL"
 
                     sizers[objName]=obj
 
 
                 elif type=="wxCheckBox":
                     obj = WxCheckBox.WxCheckBox(obj, type)
+                    obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
                         if "wxT"in parameters[i]:
@@ -114,6 +111,7 @@ def getUIobjName():
 
                 elif type=="wxStaticText":
                     obj = WxStaticText.WxStaticText(obj, type)
+                    obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
                         if "wxT"in parameters[i]:
@@ -129,7 +127,7 @@ def getUIobjName():
 
                         elif "wxID" in parameters[i]:
                             obj.wxID=parameters[i].split("_")[1]
-                            print obj.wxID
+                            # print obj.wxID
 
                         elif "wxString" in parameters[i]:
                             word = re.findall('"([^"]*)"', parameters[i])
@@ -144,6 +142,7 @@ def getUIobjName():
 
                 elif type=="wxTextCtrl":
                     obj = WxTextCtrl.WxTextCtrl(obj, type)
+                    obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
                         if "wxT("in parameters[i]:
@@ -153,13 +152,13 @@ def getUIobjName():
                         elif "wxPoint"in parameters[i]:
                             pattern = re.compile(r'\((.*)\)')
                             match = re.search(pattern, parameters[i])
-                            print match.group()
+                            # print match.group()
                             a = match.group(1).split(",")
                             obj.wxPoint=[a]
 
                         elif "wxID" in parameters[i]:
                             obj.wxID=parameters[i].split("_")[1]
-                            print obj.wxID
+                            # print obj.wxID
 
                         elif "DefaultPosition" in parameters[i]:
                             obj.wxPoint = [-1,-1]
@@ -169,30 +168,59 @@ def getUIobjName():
 
                         elif "wxTE" in parameters[i]:
                             obj.wxTE = parameters[i].split("_")[1]
-                            print obj.wxTE,"wxTE.........................."
+                            # print obj.wxTE,"wxTE.........................."
 
 
-                else:
-                    print type," jklfalksfjhuijfhakjb"
+                elif type=="wxPanel":
                     obj= WxObjects.WxObjects(obj,type)
+
+                    type1[obj.name]=obj
+
                     for i in range(1, len(parameters)):
                         obj.addFeature(parameters[i])
                         print parameters[i], "feature", i
 
-
-
                 foundObjects.append(obj)
                 print obj.name," Object found in the code"
 
-                if parameters[0] in type1:
-                    for x in foundObjects:
-                        if x.name == parameters[0]:
-                            x.addObject(obj)
-                            # x.addObject(obj)
-                            print len(x.innerObj),"--------------------"
-                            convertToXml(x)
+                # if parameters[0] in type1:
+                #     for x in foundObjects:
+                #         if x.name == parameters[0]:
+                #             x.addObject(obj)
+                #             # x.addObject(obj)
+                #             print len(x.innerObj),"--------------------"
+                #             convertToXml(x)
+            elif (sizerStr in line):
+                sizer = line.split("->")[0].split()[0]
+                print "---------------------****************--------------------", obj
 
-    convertToXml(sizers["hbox3"])
+                if sizers.has_key(sizer):
+                    print "---------------------chanaka--------------------", sizers[sizer]
+                    sizerObj = sizers[sizer]
+
+                    for x in foundObjects:
+                        if x.name==obj:
+                            sizers[sizer].addObject(x)
+
+        for panels,panelObj in type1.iteritems():
+
+            if panels+"->SetSizer" in line:
+                normal=False
+                m = re.search(r"\(([A-Za-z0-9_]+)\)", line)
+                boxs=m.group(1)
+                panelObj.addObject(sizers[boxs]);
+
+    if normal:
+        for wxObj in foundObjects:
+
+            if wxObj.name in type2:
+                print wxObj.type, "ttttttttttttttttttttttt"
+                panelObj.addObject(wxObj);
+
+
+
+    for panels, panelObj in type1.iteritems():
+        convertToXml(panelObj)
 
 def getType1Obj(line):
     pattern=re.compile(r'\((.*)\)')

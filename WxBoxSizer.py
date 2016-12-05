@@ -1,4 +1,4 @@
-class WxObjects:
+class WxBoxSizer:
 
     def __init__(self,name, type):
         self.features = []
@@ -6,12 +6,11 @@ class WxObjects:
         self.name = name
         self.type = type
         self.innerObj = []
-        self.panel=""
-        self.align=""
+        self.direction=""
 
-    def addObject(self,type2obj):
-        self.innerObj.append(type2obj)
-        print type2obj.name,"Obj added to ", self.name
+    def addObject(self,obj):
+        self.innerObj.append(obj)
+        print obj.name,"Obj---- added to ", self.name
 
     def addFeature(self,feature):
 

@@ -10,25 +10,30 @@ import WxTextCtrl
 import WxBoxSizer
 import WxSpinCtrl
 import json
+import Event
+from collections import defaultdict
+
+
 
 d2 = json.load(open("C:/ProjectSE/Parser/uifile.txt"))
 print d2
 # type1={}
-objects={"panel":"wxPanel"}
+events=defaultdict(list)
+objects={}
 sizers={}
 type1={"panel":None}
-for key, value in d2.iteritems():
-    for wxObj in value:
-        objects[wxObj]=key
-    if key=="wxBoxSizer":
-        for i in value:
-            sizers[i]=None
-for key,val in objects.iteritems():
-    print "_________________",key,":",val
-#
-# for key,val in sizers.iteritems():
-#     print "_________________",key,":",val
+type2={"button1","button2S","m_cb","m_usernameLabel"}
 
+for key, value in d2.iteritems():
+    if key=="wxPanel" or key=="wxBoxSizer" or key=="wxButton" or key=="wxCheckBox" or key=="wxStaticText" or key=="wxTextCtrl" or key=="wxRadioButton" or key=="wxScrolledWindow" or key=="wxSpinCtrl":
+        for wxObj in value:
+
+            objects[wxObj]=key
+        if key=="wxBoxSizer":
+            for i in value:
+                sizers[i]=None
+# for key,val in objects.iteritems():
+#     print "_________________",key,":",val
 
 # sizers={"vbox":None,"hbox1":None,"hbox2":None,"hbox3":None,"hbox4":None,"hbox5":None,"hbox6":None}
 # sizers={"topSizer":None,"boxSizer02":None,"bsRouteButtonsInner":None}
@@ -36,7 +41,7 @@ for key,val in objects.iteritems():
 
 # type2={"topSizer","m_pButtonInfo","m_pButtonJumpTo","m_pButtonAnchorWatch","m_pButtonCreateWpt","m_pButtonHideAllTracks","m_pButtonShowAllTracks",
 #        "m_pButtonToggleTrack","m_pCBAutosort","m_pStaticTextRange","m_pStaticTextCount","m_pTextTargetCount","m_pButtonOK","m_pSpinCtrlRange"}
-type2={"button1","button2S","m_cb","m_usernameLabel"}
+
 #
 # objects={"topSizer":"wxBoxSizer","boxSizer02":"wxBoxSizer","winr":"wxScrolledWindow",
 #          "bsRouteButtonsInner":"wxBoxSizer","m_pButtonInfo":"wxButton","m_pButtonJumpTo":"wxButton",
@@ -55,29 +60,40 @@ type2={"button1","button2S","m_cb","m_usernameLabel"}
 #          "m_buttonLogin":"wxButton","m_buttonQuit":"wxButton"}
 foundObjects=[]
 
-Mappings={"wxButton":"button","wxPanel":"div"}
+ids={}
 
 
 # wx_file= open('C:/ProjectSE/WxTest/WxTest/button.cpp','r')
 # wx_file= open('C:/ProjectSE/wxCheckBox/wxCheckBox/checkbox.cpp','r')
-# wx_file= open('C:/ProjectSE/WxLoginForm/WxLoginForm/FormLogin.cpp','r')
-wx_file= open('C:/ProjectSE/wxRegitrationForm/WxRegitrationForm/WxRegitrationForm/FormReg.cpp','r')
+# wx_file= open('C:/ProjectSE/parser/AISTargetListDialog.cpp','r')
+wx_file= open('C:/ProjectSE/WxLoginForm/WxLoginForm/FormLogin.cpp','r')
+# wx_file= open('C:/ProjectSE/wxRegitrationForm/WxRegitrationForm/WxRegitrationForm/FormReg.cpp','r')
 # wx_file= open('C:/ProjectSE/WxLoginForm/form.cpp','r')
 
 def getUIobjName():
     normal = True
 
     for line in wx_file:
-        print line
+
+
         for obj, type in objects.iteritems():
 
             searchStr = obj+" "+"="+" "+"new"
 
+            eventStr= obj+"->Connect"
+
             sizerStr="->Add("+obj
 
             if (searchStr in line):
+                print line
+                if ";" not in line:
+
+                    l= (line+(next(wx_file).replace(' ', ''))).replace('\n', '')
+                    print l
+                    line= l
 
                 if type=="wxBoxSizer":
+
                     pattern = re.compile(r'\((.*)\)')
 
                     match = re.search(pattern, line)
@@ -87,17 +103,18 @@ def getUIobjName():
                     print parameters
 
                 else:
-                    print line
+                    # print line
                     parameters = getType1Obj(line)
                     print type, "+_+_+_+_"
 
                 if type=="wxButton":
                     obj = WxButton.WxButton(obj, type)
                     obj.panel=parameters[0]
+                    print obj.panel, " obj.panel"
                     for i in range(1, len(parameters)):
+                        print parameters[i]
 
-
-                        if "wxT"in parameters[i]:
+                        if "wxT"in parameters[i] or "_(" in parameters[i] or "_T(" in parameters[i]:
                             word =re.findall('"([^"]*)"', parameters[i])
                             obj.wxT=word[0]
                             print "***************", word[0]
@@ -105,13 +122,13 @@ def getUIobjName():
                         elif "wxPoint"in parameters[i]:
                             pattern = re.compile(r'\((.*)\)')
                             match = re.search(pattern, parameters[i])
-                            print match.group()
+                            # print match.group()
                             a = match.group(1).split(",")
                             obj.wxPoint=[a]
 
                         elif "wxID" in parameters[i]:
                             obj.wxID=parameters[i].split("_")[1]
-                            print obj.wxID
+                            # print obj.wxID
 
                 if type=="wxBoxSizer":
                     objName=obj
@@ -130,35 +147,14 @@ def getUIobjName():
                     obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
-                        if "wxT"in parameters[i]:
+                        if "wxT"in parameters[i] or "_(" in parameters[i]or "_T(" in parameters[i]:
                             word =re.findall('"([^"]*)"', parameters[i])
                             obj.wxT=word[0]
 
                         elif "wxPoint"in parameters[i]:
                             pattern = re.compile(r'\((.*)\)')
                             match = re.search(pattern, parameters[i])
-                            print match.group()
-                            a = match.group(1).split(",")
-                            obj.wxPoint=[a]
-
-                        elif "wxID" in parameters[i]:
-                            obj.wxID=parameters[i].split("_")[1]
-                            print obj.wxID
-
-                elif type=="wxStaticText":
-                    print "iiiiiiiiiii"
-                    obj = WxStaticText.WxStaticText(obj, type)
-                    obj.panel = parameters[0]
-
-                    for i in range(1, len(parameters)):
-                        if "wxT"in parameters[i]:
-                            word =re.findall('"([^"]*)"', parameters[i])
-                            obj.wxT=word[0]
-
-                        elif "wxPoint"in parameters[i]:
-                            pattern = re.compile(r'\((.*)\)')
-                            match = re.search(pattern, parameters[i])
-                            print match.group()
+                            # print match.group()
                             a = match.group(1).split(",")
                             obj.wxPoint=[a]
 
@@ -166,23 +162,50 @@ def getUIobjName():
                             obj.wxID=parameters[i].split("_")[1]
                             # print obj.wxID
 
-                        elif "wxString" in parameters[i]:
-                            word = re.findall('"([^"]*)"', parameters[i])
-                            obj.wxString = word[0]
+                elif type=="wxStaticText":
+                    # print "iiiiiiiiiii"
+                    obj = WxStaticText.WxStaticText(obj, type)
+                    obj.panel = parameters[0]
+                    for i in range(1, len(parameters)):
 
-                        elif "wxSize" in parameters[i]:
+                        if "_(" in parameters[i]:
+                            print parameters[i],"in the if"
+
+                    for i in range(1, len(parameters)):
+
+                        if "_(" in parameters[i] or "wxT" in parameters[i]or "_T(" in parameters[i]:
+                            word =re.findall('"([^"]*)"', parameters[i])
+                            obj.wxT=word[0]
+
+
+                        elif "wxPoint"in parameters[i]:
                             pattern = re.compile(r'\((.*)\)')
                             match = re.search(pattern, parameters[i])
                             # print match.group()
                             a = match.group(1).split(",")
-                            obj.wxSize = [a]
+                            obj.wxPoint=[a]
+
+                        elif "wxID" in parameters[i]:
+                            obj.wxID=parameters[i].split("_")[1]
+                            # print obj.wxID
+                        #
+                        elif "wxString" in parameters[i]:
+                            word = re.findall('"([^"]*)"', parameters[i])
+                            obj.wxString = word[0]
+
+                        # elif "wxSize" in parameters[i]:
+                        #     pattern = re.compile(r'\((.*)\)')
+                        #     match = re.search(pattern, parameters[i])
+                        #     # print match.group()
+                        #     a = match.group(1).split(",")
+                        #     obj.wxSize = [a]
 
                 elif type=="wxTextCtrl":
                     obj = WxTextCtrl.WxTextCtrl(obj, type)
                     obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
-                        if "wxT("in parameters[i]:
+                        if "wxT("in parameters[i] or "_(" in parameters[i]or "_T(" in parameters[i]:
                             word =re.findall('"([^"]*)"', parameters[i])
                             obj.wxT=word[0]
 
@@ -213,14 +236,14 @@ def getUIobjName():
 
                 elif type=="wxRadioButton":
                     obj = WxSpinCtrl.WxSpinCtrl(obj, type)
-                    print "---------------------chanaka--------------------", obj.name
+                    # print "---------------------chanaka--------------------", obj.name
                     obj.panel = parameters[0]
 
                     for i in range(1, len(parameters)):
-                        if "wxT(" in parameters[i]:
+                        if "wxT(" in parameters[i] or "_(" in parameters[i]or "_T(" in parameters[i]:
                             word = re.findall('"([^"]*)"', parameters[i])
                             obj.wxT = word[0]
-                            print "---------------------name--------------------", word[0]
+                            # print "---------------------name--------------------", word[0]
 
                 elif type=="wxPanel":
                     obj= WxObjects.WxObjects(obj,type)
@@ -250,25 +273,50 @@ def getUIobjName():
                 #             # x.addObject(obj)
                 #             print len(x.innerObj),"--------------------"
                 #             convertToXml(x)
+
+            elif (eventStr in line):
+
+                if ";" not in line:
+                    l= (line+(next(wx_file).replace(' ', ''))).replace('\n', '')
+
+                    line= l
+                pattern = re.compile(r'\((.*)\)')
+                match = re.search(pattern, line)
+                eventPara = match.group(1).replace(' ','').split(",")
+                print eventPara
+                for i in range(0,len(eventPara)):
+                    if "wxEVT_" in eventPara[i]:
+                        print "Event obj created"+obj
+                        event = Event.WxEvent(eventPara[i])
+                        events[obj].append(event)
+
+                    if "EventHandler" in eventPara[i]:
+                        event.evtHandler=eventPara[i].split("(")[0]
+
+                        pattern = re.compile(r'\((.*)\)')
+                        match = re.search(pattern, eventPara[i])
+                        event.method=match.group(1).replace(' ','')
+
+                evtxml = convertToXml(events)
+                xmlFile = open("C:\wamp\www\BootstrapConverter\event.xml", "w")
+
+                xmlFile.write(evtxml)
+
+
             elif (sizerStr in line):
                 sizer = line.split("->")[0].split()[0]
-                # print "---------------------****************--------------------", line
-                # print "---------------------***********wanted*****--------------------", line.split("->")[1]
                 pattern = re.compile(r'\((.*)\)')
 
                 match = re.search(pattern, line)
 
-                print match.group()
+                # print match.group()
 
                 a = match.group(1).split(", ")
                 i =0
                 align=""
                 for p in a:
-                    # print "---------------------chanaka--------------------", a[i]
                     if "|" in a[i]:
                         align= a[i].split("|")[0].split()[0]
-                        # print "------------------------------------------",align.split()[0],"444444444444"
-
                     i=i+1
 
                 if sizers.has_key(sizer):
@@ -294,12 +342,17 @@ def getUIobjName():
 
             if wxObj.name in type2:
                 print wxObj.type
-                panelObj.addObject(wxObj);
+                panelObj.addObject(wxObj)
 
 
 
     for panels, panelObj in type1.iteritems():
-        convertToXml(panelObj)
+        print panels,panelObj,"---------------";
+        # print
+        textxml=convertToXml(panelObj)
+        xmlFile = open("C:\wamp\www\BootstrapConverter\ui.xml", "w")
+
+        xmlFile.write(textxml)
     # convertToXml(sizers["topSizer"])
 
 
@@ -313,7 +366,7 @@ def getType1Obj(line):
     a=match.group(1).split(", ")
     print "type1 is : ",a[0]
 
-    if a[0] in type1:
+    if a[0].replace(' ','') in type1:
         print a[0], " is the type1 obj found"
     return a
 
@@ -325,12 +378,11 @@ def convertToXml(x):
 
     type1xml = dicttoxml.dicttoxml(xjsonObj)
     print "Type1 object xml :"
-    print(type1xml)
+    return(type1xml)
 
     # xmlFile = open("C:\wamp\www\ui.xml", "w")
-    xmlFile = open("C:\wamp\www\BootstrapConverter\ui.xml", "w")
 
-    xmlFile.write(type1xml)
+
 
 
 getUIobjName()
